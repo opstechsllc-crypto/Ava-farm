@@ -95,3 +95,6 @@ jobs:
       - name: Docker Push
         run: |
           docker push opstechllc/netflix:latest
+
+          env:
+          DOCKER_CLI_ACI: 1
