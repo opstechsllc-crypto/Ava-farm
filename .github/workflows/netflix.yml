@@ -41,6 +41,17 @@ jobs:
         run: |
           trivy fs --severity HIGH,CRITICAL .
 
+      - name: Docker build and push
+        run: |
+         #run commands to build and push docker images
+         docker build --build-arg TMDB_V3_API_KEY= -t netflix .
+         docker tag netflix opstechllc/netflix:latest
+         docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+         docker push opstechllc/netflix:latest
+         env:
+           DOCKER_CLI_ACI: 1
+
+
       # Optional: fail the workflow when SonarQube Quality Gate fails
       # - name: SonarQube Quality Gate
       #   uses: sonarsource/sonarqube-quality-gate-action@v1
