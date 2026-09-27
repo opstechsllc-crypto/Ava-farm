@@ -16,12 +16,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      # -------------------------
+      # SonarQube
+      # -------------------------
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+      # -------------------------
+      # Install Trivy
+      # -------------------------
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -37,24 +43,55 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
+      # -------------------------
+      # Trivy filesystem scan
+      # -------------------------
       - name: Trivy Filesystem Scan
         run: |
           trivy fs --severity HIGH,CRITICAL .
 
-      - name: Docker build and push
+      # -------------------------
+      # Verify Dockerfile
+      # -------------------------
+      - name: Verify Dockerfile
         run: |
-         #run commands to build and push docker images
-         docker build --build-arg TMDB_V3_API_KEY=56d17174fd1f54fc2b4f20a790eee80f -t netflix .
-         docker tag netflix opstechllc/netflix:latest
-         docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
-         docker push opstechllc/netflix:latest
-         env:
-           DOCKER_CLI_ACI: 1
+          echo "Current directory:"
+          pwd
 
+          echo "Repository contents:"
+          ls -la
 
-      # Optional: fail the workflow when SonarQube Quality Gate fails
-      # - name: SonarQube Quality Gate
-      #   uses: sonarsource/sonarqube-quality-gate-action@v1
-      #   timeout-minutes: 5
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          echo "Dockerfiles found:"
+          find . -maxdepth 3 -type f -iname 'Dockerfile*' -print
+
+      # -------------------------
+      # Docker Build
+      # -------------------------
+      - name: Docker Build
+        run: |
+          docker build \
+            --build-arg TMDB_V3_API_KEY="${{ secrets.TMDB_V3_API_KEY }}" \
+            -t netflix .
+
+      # -------------------------
+      # Docker Login
+      # -------------------------
+      - name: Docker Hub Login
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login \
+            -u "${{ secrets.DOCKERHUB_USERNAME }}" \
+            --password-stdin
+
+      # -------------------------
+      # Docker Tag
+      # -------------------------
+      - name: Docker Tag
+        run: |
+          docker tag netflix opstechllc/netflix:latest
+
+      # -------------------------
+      # Docker Push
+      # -------------------------
+      - name: Docker Push
+        run: |
+          docker push opstechllc/netflix:latest
