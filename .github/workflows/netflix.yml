@@ -96,4 +96,13 @@ jobs:
         run: |
           docker push opstechllc/netflix:latest
 
-          
+  deploy:
+    needs: build-analyze-scan
+    runs-on: [sonerqube]
+    steps:
+      - name: Pull the docker image
+        run: docker pull opstechllc/netflix:latest
+      - name: Trivy image scan
+        run: trivy image opstechllc/netflix:latest
+      - name: Run the container netflix
+        run: docker run -d --name netflix -p 8081:80 opstechllc/netflix:latest
