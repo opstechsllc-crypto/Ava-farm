@@ -98,7 +98,7 @@ jobs:
 
   deploy:
     needs: build-analyze-scan
-    runs-on: sonarqube
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Pull the docker image
         run: docker pull opstechllc/netflix:latest
